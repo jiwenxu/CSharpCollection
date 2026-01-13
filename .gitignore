@@ -1,0 +1,35 @@
+# 编译输出
+bin/
+obj/
+[Bb]uild/
+[Bb]uilds/
+
+# 依赖项
+[Dd]ependencies/
+packages/
+
+# 用户文件
+*.user
+*.suo
+*.userosscache
+
+# IDE文件
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 运行时文件
+*.runtimeconfig.json
+*.deps.json
+
+# 日志文件
+logs/
+*.log
+
+# FFmpeg二进制文件（建议用户自行下载）
+platforms/**/ffmpeg/
+
+# 个人设置
+appsettings.user.json
