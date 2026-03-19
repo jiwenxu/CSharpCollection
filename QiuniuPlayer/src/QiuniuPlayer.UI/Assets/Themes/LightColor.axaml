@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--  ===================== 基础颜色变量 =====================  -->
+    <Color x:Key="PrimaryColor">#2D6BFF</Color>
+    <!--  主色调（蓝色）  -->
+    <Color x:Key="PrimaryLightColor">#5A89FF</Color>
+    <!--  主色调浅色  -->
+    <Color x:Key="PrimaryDarkColor">#1A56E0</Color>
+    <!--  主色调深色  -->
+
+    <Color x:Key="BackgroundColor">#FFFFFF</Color>
+    <!--  背景色  -->
+    <Color x:Key="SurfaceColor">#F8F9FA</Color>
+    <!--  表面色（卡片/面板）  -->
+    <Color x:Key="BorderColor">#E9ECEF</Color>
+    <!--  边框色  -->
+
+    <Color x:Key="TextPrimaryColor">#212529</Color>
+    <!--  主要文本色  -->
+    <Color x:Key="TextSecondaryColor">#495057</Color>
+    <!--  次要文本色  -->
+    <Color x:Key="TextDisabledColor">#ADB5BD</Color>
+    <!--  禁用文本色  -->
+
+    <Color x:Key="ErrorColor">#DC3545</Color>
+    <!--  错误色  -->
+    <Color x:Key="SuccessColor">#198754</Color>
+    <!--  成功色  -->
+    <Color x:Key="WarningColor">#FFC107</Color>
+    <!--  警告色  -->
+
+    <Color x:Key="BorderCardColor">#20FFFFFF</Color>
+    <Color x:Key="BorderShadowColor">#50000000</Color>
+    <BoxShadows x:Key="CardShadow">0 4 8 0 #50000000</BoxShadows>
+</ResourceDictionary>

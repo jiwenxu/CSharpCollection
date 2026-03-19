@@ -5,11 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiuniuPlayer.Core", "src\QiuniuPlayer.Core\QiuniuPlayer.Core.csproj", "{B5FE8E87-40D5-4E52-AA40-2C91241000DF}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiuniuPlayer.UI", "src\QiuniuPlayer.UI\QiuniuPlayer.UI.csproj", "{807B0F9E-CD50-495C-BBFC-249A223CEB1B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QiuniuPlayer.Desktop", "src\QiuniuPlayer.Desktop\QiuniuPlayer.Desktop.csproj", "{90B7D55C-4A10-41D6-BD18-332D619FB26A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,18 +17,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Debug|x64.Build.0 = Debug|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Debug|x86.Build.0 = Debug|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Release|x64.ActiveCfg = Release|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Release|x64.Build.0 = Release|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Release|x86.ActiveCfg = Release|Any CPU
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF}.Release|x86.Build.0 = Release|Any CPU
 		{807B0F9E-CD50-495C-BBFC-249A223CEB1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{807B0F9E-CD50-495C-BBFC-249A223CEB1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{807B0F9E-CD50-495C-BBFC-249A223CEB1B}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -45,25 +29,11 @@ Global
 		{807B0F9E-CD50-495C-BBFC-249A223CEB1B}.Release|x64.Build.0 = Release|Any CPU
 		{807B0F9E-CD50-495C-BBFC-249A223CEB1B}.Release|x86.ActiveCfg = Release|Any CPU
 		{807B0F9E-CD50-495C-BBFC-249A223CEB1B}.Release|x86.Build.0 = Release|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Debug|x64.Build.0 = Debug|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Debug|x86.Build.0 = Debug|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Release|x64.ActiveCfg = Release|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Release|x64.Build.0 = Release|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Release|x86.ActiveCfg = Release|Any CPU
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{B5FE8E87-40D5-4E52-AA40-2C91241000DF} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{807B0F9E-CD50-495C-BBFC-249A223CEB1B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
-		{90B7D55C-4A10-41D6-BD18-332D619FB26A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

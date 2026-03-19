@@ -1,20 +1,43 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:QiuniuPlayer.UI.ViewModels"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="QiuniuPlayer.UI.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="QiuniuPlayer.UI">
-
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
-
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+<Window
+    x:Class="QiuniuPlayer.UI.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="using:QiuniuPlayer.UI.Views"
+    xmlns:vm="using:QiuniuPlayer.UI.ViewModels"
+    Title="QiuniuPlayer.UI"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    x:DataType="vm:MainWindowViewModel"
+    Background="Transparent"
+    ExtendClientAreaChromeHints="NoChrome"
+    Icon="/Assets/avalonia-logo.ico"
+    TransparencyLevelHint="AcrylicBlur"
+    ExtendClientAreaToDecorationsHint="True"
+    WindowStartupLocation="CenterScreen"
+    CanResize="False"
+    mc:Ignorable="d">
+    <!--
+        ExtendClientAreaChromeHints="NoChrome": 移除默认的窗口装饰
+        TransparencyLevelHint: 指定透明度类型
+            AcrylicBlur: 创建毛玻璃效果
+            Transparent: 使窗口完全透明
+        ExtendClientAreaToDecorationsHint="True": 将客户区域扩展到包含窗口装饰
+        Background="Transparent": 设置窗口背景为透明
+    -->
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Panel Grid.Row="0">
+            <views:MainTitleView />
+        </Panel>
+        <Panel Grid.Row="1">
+            <Grid ColumnDefinitions="260,*,350">
+                <views:SongListView Grid.Column="0" DataContext="{Binding}" />
+                <Panel Grid.Column="1" Classes="CardBorder"></Panel>
+                <Panel Grid.Column="2" Classes="CardBorder"></Panel>
+            </Grid>
+        </Panel>
+        <TextBlock Grid.Row="2" Text="底部" />
+    </Grid>
 
 </Window>

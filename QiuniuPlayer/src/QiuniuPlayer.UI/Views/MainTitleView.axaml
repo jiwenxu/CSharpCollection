@@ -1,0 +1,40 @@
+<UserControl
+  x:Class="QiuniuPlayer.UI.Views.MainTitleView"
+  xmlns="https://github.com/avaloniaui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:vm="using:QiuniuPlayer.UI.ViewModels"
+  x:DataType="vm:MainTitleViewModel"
+  mc:Ignorable="d">
+  <Border Classes="CardBorder">
+    <Grid ColumnDefinitions="300,*,300">
+      <Panel Grid.Column="0">
+        <Button>
+          <PathIcon Data="{StaticResource more_circle_regular}" />
+        </Button>
+      </Panel>
+      <Panel Grid.Column="1">
+        <TextBlock Classes="Title" Text="{Binding Title}" />
+      </Panel>
+      <StackPanel
+        Grid.Column="2"
+        HorizontalAlignment="Right"
+        Orientation="Horizontal"
+        Spacing="2">
+        <Button IsEnabled="False">
+          <PathIcon Data="{StaticResource search_regular}" />
+        </Button>
+        <Button Command="{Binding SwitchLanguageCommand}">
+          <PathIcon Data="{StaticResource local_language_regular}" />
+        </Button>
+        <Button Command="{Binding SwitchThemeCommand}">
+          <PathIcon Data="{StaticResource dark_theme_regular}" />
+        </Button>
+        <Button Command="{Binding ExitCommand}">
+          <PathIcon Data="{StaticResource power_regular}" />
+        </Button>
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>

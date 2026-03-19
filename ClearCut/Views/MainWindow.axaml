@@ -1,0 +1,262 @@
+<Window
+    x:Class="ClearCut.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+    xmlns:vm="using:ClearCut.ViewModels"
+    Title="ClearCut - 视频压缩与音频提取 MVP"
+    MinWidth="980"
+    MinHeight="700"
+    d:DesignHeight="760"
+    d:DesignWidth="1200"
+    x:DataType="vm:MainWindowViewModel"
+    Icon="/Assets/avalonia-logo.ico"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid Margin="20" RowDefinitions="Auto,*,Auto">
+        <TextBlock
+            Grid.Row="0"
+            FontSize="22"
+            FontWeight="SemiBold"
+            Text="ClearCut · MP4(H.264) 压缩 / 音频提取" />
+
+        <Grid
+            Grid.Row="1"
+            Margin="0,16,0,12"
+            ColumnDefinitions="340,12,*,12,400">
+            <Border
+                Classes="card"
+                DragDrop.AllowDrop="True"
+                DragDrop.DragOver="OnFileDragOver"
+                DragDrop.Drop="OnFileDrop">
+                <StackPanel Spacing="12">
+                    <TextBlock Classes="sectionTitle" Text="输入文件" />
+                    <Border
+                        MinHeight="220"
+                        Padding="16"
+                        BorderBrush="#C9D3E4"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel VerticalAlignment="Center" Spacing="8">
+                            <TextBlock Text="{Binding InputDisplayName}" TextWrapping="Wrap" />
+                            <TextBlock Classes="label" Text="仅支持 .mp4 (H.264)" />
+                            <Button
+                                Classes="secondary"
+                                Click="OnPickFileClick"
+                                Content="选择 MP4 文件"
+                                IsEnabled="{Binding CanPickFile}" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Classes="label" Text="媒体信息" />
+                    <TextBlock Text="{Binding MediaInfoText}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <GridSplitter
+                Grid.Column="1"
+                Background="#E5E8EF"
+                ResizeDirection="Columns" />
+
+            <TabControl Grid.Column="2">
+                <TabItem Header="压缩视频">
+                    <Border Margin="0,8,0,0" Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock Classes="label" Text="质量档位" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding QualityOptions}"
+                                SelectedItem="{Binding SelectedQuality}" />
+                            <TextBlock Classes="label" Text="高级参数（可选，直接追加到 FFmpeg 命令）" />
+                            <TextBox Text="{Binding VideoAdvancedArgs}" Watermark="-vf scale=1280:-2" />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button
+                                    Classes="secondary"
+                                    Command="{Binding CompressPreviewCommand}"
+                                    Content="压缩预览（前10秒）"
+                                    IsEnabled="{Binding CanRunActions}" />
+                                <Button
+                                    Classes="primary"
+                                    Command="{Binding CompressFullCommand}"
+                                    Content="压缩完整视频"
+                                    IsEnabled="{Binding CanRunActions}" />
+                            </StackPanel>
+                            <TextBlock
+                                Classes="label"
+                                Text="预设参数示例：High=-crf 23 -preset fast；Medium=-crf 26 -preset medium；Low=-crf 28 -preset slower"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+
+                <TabItem Header="提取音频">
+                    <Border Margin="0,8,0,0" Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock Classes="label" Text="输出格式：MP3（libmp3lame）" />
+                            <TextBlock Classes="label" Text="高级参数（可选，直接追加到 FFmpeg 命令）" />
+                            <TextBox Text="{Binding AudioAdvancedArgs}" Watermark="-ar 44100 -ac 2" />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button
+                                    Classes="secondary"
+                                    Command="{Binding ExtractPreviewCommand}"
+                                    Content="提取音频预览（前10秒）"
+                                    IsEnabled="{Binding CanRunActions}" />
+                                <Button
+                                    Classes="primary"
+                                    Command="{Binding ExtractFullCommand}"
+                                    Content="提取完整音频"
+                                    IsEnabled="{Binding CanRunActions}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+            </TabControl>
+            <GridSplitter
+                Grid.Column="3"
+                Background="#E5E8EF"
+                ResizeDirection="Columns" />
+            <Border Grid.Column="4" Classes="card">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Classes="sectionTitle" Text="{Binding PreviewTitle}" />
+                    <Border
+                        Grid.Row="1"
+                        Padding="8"
+                        BorderBrush="#D9DCE3"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <Grid RowDefinitions="*, 85">
+                            <!-- <Image
+                                IsVisible="{Binding HasPreview}"
+                                Source="{Binding PreviewBitmap}"
+                                Stretch="Uniform" />-->
+                            <Grid
+                                x:Name="PlayerContainer"
+                                Grid.Row="0"
+                                IsVisible="{Binding HasPreview}">
+                                <vlc:VideoView
+                                    x:Name="VideoView"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch" />
+                            </Grid>
+
+
+                            <TextBlock
+                                Grid.Row="0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Foreground="#8A93A8"
+                                IsVisible="{Binding !HasPreview}"
+                                Text="暂无可视化预览" />
+                            <!--  🎛 控制层  -->
+                            <Grid Grid.Row="1" Background="Transparent">
+
+                                <!--  顶部渐变遮罩  -->
+                                <Border Height="80" VerticalAlignment="Top">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Offset="0" Color="#AA000000" />
+                                            <GradientStop Offset="1" Color="#00000000" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+
+                                <!--  底部控制栏  -->
+                                <Border Height="80" VerticalAlignment="Bottom">
+
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Offset="0" Color="#00000000" />
+                                            <GradientStop Offset="1" Color="#AA000000" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+
+                                    <Grid Margin="5" RowDefinitions="Auto,Auto">
+                                        <!--  🎯 进度条  -->
+                                        <Slider
+                                            x:Name="SeekSlider"
+                                            Grid.Row="0"
+                                            Margin="0,-5,0,0"
+                                            Maximum="100"
+                                            Minimum="0"
+                                            Value="{Binding Progress}" />
+
+                                        <!--  🎮 控制按钮  -->
+                                        <StackPanel
+                                            Grid.Row="1"
+                                            Margin="0,-15,0,0"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Spacing="10">
+
+                                            <!--  播放/暂停  -->
+                                            <Button
+                                                VerticalAlignment="Center"
+                                                Click="OnPlayPauseClick"
+                                                Content="{Binding PlayButtonText}" />
+
+                                            <!--  时间  -->
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                Foreground="White"
+                                                Text="{Binding CurrentTimeText}" />
+
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                Foreground="White"
+                                                Text="/" />
+
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                Foreground="White"
+                                                Text="{Binding TotalTimeText}" />
+
+                                            <!--  填充  -->
+                                            <StackPanel Width="20" />
+
+                                            <!--  音量  -->
+                                            <Slider
+                                                Width="100"
+                                                VerticalAlignment="Center"
+                                                Maximum="100"
+                                                Minimum="0"
+                                                ValueChanged="OnVolumeChanged"
+                                                Value="{Binding Volume}" />
+
+                                            <!--  全屏  -->
+                                            <Button
+                                                VerticalAlignment="Center"
+                                                Click="OnFullscreenClick"
+                                                Content="⛶" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!--  🖱 点击层（双击全屏）  -->
+                                <!-- <Border Background="Transparent" DoubleTapped="OnFullscreenClick" /> -->
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="2" Classes="card">
+            <StackPanel Spacing="8">
+                <TextBlock FontWeight="SemiBold" Text="{Binding StatusText}" />
+                <TextBlock Text="{Binding LastOutputPath, StringFormat=最近输出: {0}}" TextWrapping="Wrap" />
+                <TextBox
+                    Height="120"
+                    AcceptsReturn="True"
+                    IsReadOnly="True"
+                    Text="{Binding LogText}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+
+</Window>
