@@ -33,3 +33,4 @@ platforms/**/ffmpeg/
 
 # 个人设置
 appsettings.user.json
+/ClearCut/Binaries
