@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -15,7 +14,9 @@ public partial class MainWindow : Window
 {
     private bool _isFullscreen = false;
     private bool _isDragging = false;
+    private bool _wasPlaying = false;
     private WindowState _previousState;
+    private DispatcherTimer? _playbackTimer;
 
     public MainWindow()
     {
@@ -46,25 +47,35 @@ public partial class MainWindow : Window
             VideoView.MediaPlayer = vm.MediaPlayer;
         }
 
-        DispatcherTimer _timer = new DispatcherTimer
+        _playbackTimer ??= new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(500)
         };
+        _playbackTimer.Tick -= PlaybackTimerOnTick;
+        _playbackTimer.Tick += PlaybackTimerOnTick;
+        _playbackTimer.Start();
+    }
 
-        _timer.Tick += (_, _) =>
+    protected override void OnClosed(EventArgs e)
+    {
+        if (_playbackTimer is not null)
         {
-            if (DataContext is MainWindowViewModel vm && !_isDragging)
-            {
-                var mp = vm.MediaPlayer;
+            _playbackTimer.Stop();
+            _playbackTimer.Tick -= PlaybackTimerOnTick;
+        }
 
-                vm.Progress = mp.Position * 100;
+        base.OnClosed(e);
+    }
 
-                vm.CurrentTimeText = TimeSpan.FromMilliseconds(mp.Time).ToString(@"mm\:ss");
-                vm.TotalTimeText = TimeSpan.FromMilliseconds(mp.Length).ToString(@"mm\:ss");
-            }
-        };
-
-        _timer.Start();
+    private void PlaybackTimerOnTick(object? sender, EventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm && !_isDragging)
+        {
+            var mp = vm.MediaPlayer;
+            vm.Progress = mp.Position * 100;
+            vm.CurrentTimeText = TimeSpan.FromMilliseconds(mp.Time).ToString(@"mm\:ss");
+            vm.TotalTimeText = TimeSpan.FromMilliseconds(mp.Length).ToString(@"mm\:ss");
+        }
     }
 
     private async void OnPickFileClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -132,7 +143,6 @@ public partial class MainWindow : Window
 
     private void OnFullscreenClick(object? sender, RoutedEventArgs e)
     {
-        Console.WriteLine("Video double tapped.");
         ToggleFullscreen();
     }
 
@@ -174,7 +184,6 @@ public partial class MainWindow : Window
             vm.MediaPlayer.Volume = (int)e.NewValue;
         }
     }
-    private bool _wasPlaying = false;
     private void OnSeekStart(object? sender, PointerPressedEventArgs e)
     {
         if (DataContext is MainWindowViewModel vm)
@@ -182,7 +191,6 @@ public partial class MainWindow : Window
             _wasPlaying = vm.MediaPlayer.IsPlaying;
             vm.MediaPlayer.Pause(); // ⛔ 先暂停
         }
-        Console.WriteLine($"Seek start");
         _isDragging = true;
     }
 
@@ -193,9 +201,6 @@ public partial class MainWindow : Window
             var mp = vm.MediaPlayer;
 
             var targetTime = (long)(vm.Progress / 100.0 * mp.Length);
-
-            Console.WriteLine($"Seek end {targetTime}");
-
             mp.Time = targetTime; // ✅ 更稳
 
             if (_wasPlaying)

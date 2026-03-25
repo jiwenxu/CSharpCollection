@@ -1,5 +1,5 @@
-
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -7,38 +7,44 @@ namespace ClearCut.Services;
 
 public sealed class CommandService : ICommandService
 {
+    private readonly ITempPathService _tempPathService;
+
+    public CommandService()
+        : this(new TempPathService())
+    {
+    }
+
+    public CommandService(ITempPathService tempPathService)
+    {
+        _tempPathService = tempPathService ?? throw new ArgumentNullException(nameof(tempPathService));
+    }
+
     public Task CleanupTempFilesAsync()
     {
         try
         {
-            var tempDir = Path.Combine(AppContext.BaseDirectory, "temp");
-            if (Directory.Exists(tempDir))
+            foreach (var tempDir in _tempPathService.GetDirectoriesToCleanup())
             {
-                // 删除 temp 目录下所有文件和子目录
+                if (!Directory.Exists(tempDir))
+                {
+                    continue;
+                }
+
                 foreach (var file in Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories))
                 {
-                    File.SetAttributes(file, FileAttributes.Normal); // 移除只读属性
-                    File.Delete(file);
+                    File.SetAttributes(file, FileAttributes.Normal);
                 }
 
-                foreach (var dir in Directory.GetDirectories(tempDir, "*", SearchOption.AllDirectories))
-                {
-                    Directory.Delete(dir, true);
-                }
+                Directory.Delete(tempDir, recursive: true);
+            }
 
-                // 可选：也删除 temp 根目录本身
-                // Directory.Delete(tempDir);
-            }
-            else
-            {
-                Directory.CreateDirectory(tempDir);
-            }
+            // 保持既有行为：确保应用本地 temp 目录存在
+            Directory.CreateDirectory(_tempPathService.GetLegacyAppTempDirectory());
         }
-        catch
+        catch (Exception ex)
         {
-            // 记录日志（MVP 阶段可忽略，或写入本地 log.txt）
-            // 重要：不要 throw，避免阻止程序退出
-            //System.Diagnostics.Debug.WriteLine($"Cleanup failed: {ex.Message}");
+            // 清理失败不应阻止应用退出
+            Debug.WriteLine($"Cleanup temp files failed: {ex.Message}");
         }
         return Task.CompletedTask;
     }

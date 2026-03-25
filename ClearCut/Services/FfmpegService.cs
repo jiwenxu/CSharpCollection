@@ -14,6 +14,19 @@ public sealed class FfmpegService : IFfmpegService
 {
     private static readonly Regex DurationRegex = new(@"Duration:\s*(\d{2}):(\d{2}):(\d{2})\.(\d{2})", RegexOptions.Compiled);
     private static readonly Regex ResolutionRegex = new(@"\b(\d{2,5})x(\d{2,5})\b", RegexOptions.Compiled);
+    private static readonly SemaphoreSlim PermissionLock = new(1, 1);
+    private static bool _permissionEnsured;
+    private readonly ITempPathService _tempPathService;
+
+    public FfmpegService()
+        : this(new TempPathService())
+    {
+    }
+
+    public FfmpegService(ITempPathService tempPathService)
+    {
+        _tempPathService = tempPathService ?? throw new ArgumentNullException(nameof(tempPathService));
+    }
 
     public async Task<MediaInfo> ProbeAsync(string inputPath, CancellationToken cancellationToken = default)
     {
@@ -53,9 +66,13 @@ public sealed class FfmpegService : IFfmpegService
             _ => (26, "medium")
         };
 
-        var previewArg = preview10Seconds ? "-t 10 " : string.Empty;
-        var extra = string.IsNullOrWhiteSpace(advancedArgs) ? string.Empty : $" {advancedArgs.Trim()}";
-        var args = $"-y -hide_banner -i \"{inputPath}\" {previewArg}-c:v libx264 -preset {x264Preset} -crf {crf} -c:a aac -b:a 128k -movflags +faststart{extra} \"{outputPath}\"";
+        var args = BuildCompressArguments(
+            inputPath,
+            outputPath,
+            x264Preset,
+            crf,
+            preview10Seconds,
+            advancedArgs);
         return ExecuteProcessAsync(args, cancellationToken);
     }
 
@@ -66,9 +83,7 @@ public sealed class FfmpegService : IFfmpegService
         string? advancedArgs,
         CancellationToken cancellationToken = default)
     {
-        var previewArg = preview10Seconds ? "-t 10 " : string.Empty;
-        var extra = string.IsNullOrWhiteSpace(advancedArgs) ? string.Empty : $" {advancedArgs.Trim()}";
-        var args = $"-y -hide_banner -i \"{inputPath}\" {previewArg}-vn -codec:a libmp3lame -q:a 2{extra} \"{outputPath}\"";
+        var args = BuildExtractAudioArguments(inputPath, outputPath, preview10Seconds, advancedArgs);
 
         return ExecuteProcessAsync(args, cancellationToken);
     }
@@ -202,6 +217,40 @@ public sealed class FfmpegService : IFfmpegService
         };
     }
 
+    private static string BuildCompressArguments(
+        string inputPath,
+        string outputPath,
+        string x264Preset,
+        int crf,
+        bool preview10Seconds,
+        string? advancedArgs)
+    {
+        var preview = BuildPreviewArgument(preview10Seconds);
+        var extra = BuildAdvancedArguments(advancedArgs);
+        return $"-y -hide_banner -i \"{inputPath}\" {preview}-c:v libx264 -preset {x264Preset} -crf {crf} -c:a aac -b:a 128k -movflags +faststart{extra} \"{outputPath}\"";
+    }
+
+    private static string BuildExtractAudioArguments(
+        string inputPath,
+        string outputPath,
+        bool preview10Seconds,
+        string? advancedArgs)
+    {
+        var preview = BuildPreviewArgument(preview10Seconds);
+        var extra = BuildAdvancedArguments(advancedArgs);
+        return $"-y -hide_banner -i \"{inputPath}\" {preview}-vn -codec:a libmp3lame -q:a 2{extra} \"{outputPath}\"";
+    }
+
+    private static string BuildPreviewArgument(bool preview10Seconds)
+    {
+        return preview10Seconds ? "-t 10 " : string.Empty;
+    }
+
+    private static string BuildAdvancedArguments(string? advancedArgs)
+    {
+        return string.IsNullOrWhiteSpace(advancedArgs) ? string.Empty : $" {advancedArgs.Trim()}";
+    }
+
     private static async Task EnsureExecutablePermissionsAsync(string ffmpegPath, CancellationToken cancellationToken)
     {
         if (OperatingSystem.IsWindows())
@@ -209,20 +258,39 @@ public sealed class FfmpegService : IFfmpegService
             return;
         }
 
-        using var chmodProcess = Process.Start(new ProcessStartInfo
+        if (_permissionEnsured)
         {
-            FileName = "/bin/chmod",
-            Arguments = $"+x \"{ffmpegPath}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true
-        });
-
-        if (chmodProcess is null)
-        {
-            throw new InvalidOperationException("无法设置 FFmpeg 可执行权限。");
+            return;
         }
 
-        await chmodProcess.WaitForExitAsync(cancellationToken);
+        await PermissionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_permissionEnsured)
+            {
+                return;
+            }
+
+            using var chmodProcess = Process.Start(new ProcessStartInfo
+            {
+                FileName = "/bin/chmod",
+                Arguments = $"+x \"{ffmpegPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+
+            if (chmodProcess is null)
+            {
+                throw new InvalidOperationException("无法设置 FFmpeg 可执行权限。");
+            }
+
+            await chmodProcess.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            _permissionEnsured = true;
+        }
+        finally
+        {
+            PermissionLock.Release();
+        }
     }
 
     private static string ResolveFfmpegPath()
@@ -243,9 +311,9 @@ public sealed class FfmpegService : IFfmpegService
         return path;
     }
 
-    private static string BuildTempPreviewPath(string prefix, string extension)
+    private string BuildTempPreviewPath(string prefix, string extension)
     {
-        var dir = Path.Combine(Path.GetTempPath(), "ClearCut", "preview");
+        var dir = _tempPathService.GetPreviewDirectory();
         Directory.CreateDirectory(dir);
         return Path.Combine(dir, $"{prefix}_{Guid.NewGuid():N}{extension}");
     }

@@ -14,11 +14,16 @@ namespace ClearCut;
 
 public partial class App : Application
 {
+    private ITempPathService? _tempPathService;
+    private IFfmpegService? _ffmpegService;
     private ICommandService? _commandService;
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        _commandService = new CommandService();
+        _tempPathService = new TempPathService();
+        _ffmpegService = new FfmpegService(_tempPathService);
+        _commandService = new CommandService(_tempPathService);
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -31,10 +36,18 @@ public partial class App : Application
             EnvironmentInitialization();
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(new FfmpegService(), new CommandService()),
+                DataContext = new MainWindowViewModel(
+                    _ffmpegService ?? new FfmpegService(),
+                    _commandService ?? new CommandService()),
             };
 
-            desktop.ShutdownRequested += (s, e) => _commandService?.CleanupTempFilesAsync();
+            desktop.ShutdownRequested += async (_, _) =>
+            {
+                if (_commandService is not null)
+                {
+                    await _commandService.CleanupTempFilesAsync().ConfigureAwait(false);
+                }
+            };
             desktop.Exit += (_, __) => EnvironmentCleanup();
         }
 
@@ -55,18 +68,18 @@ public partial class App : Application
     }
 
     private static void EnvironmentInitialization()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                LinuxApi.Initialize();
-            }
+            LinuxApi.Initialize();
         }
+    }
 
-        private static void EnvironmentCleanup()
+    private static void EnvironmentCleanup()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                LinuxApi.Shutdown();
-            }
+            LinuxApi.Shutdown();
         }
+    }
 }

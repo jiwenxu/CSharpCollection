@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -15,6 +15,7 @@ namespace ClearCut.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
+    private const int MaxLogLength = 2000;
     private readonly IFfmpegService _ffmpegService;
     private readonly ICommandService _commandService;
     private readonly LibVLC _libVlc = new();
@@ -140,14 +141,7 @@ public partial class MainWindowViewModel : ViewModelBase
         finally
         {
             IsBusy = false;
-            OnPropertyChanged(nameof(InputDisplayName));
-            OnPropertyChanged(nameof(HasInput));
-            OnPropertyChanged(nameof(CanRunActions));
-            OnPropertyChanged(nameof(HasPreview));
-            CompressPreviewCommand.NotifyCanExecuteChanged();
-            CompressFullCommand.NotifyCanExecuteChanged();
-            ExtractPreviewCommand.NotifyCanExecuteChanged();
-            ExtractFullCommand.NotifyCanExecuteChanged();
+            RefreshUiState(includeInputState: true);
         }
     }
 
@@ -165,26 +159,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     partial void OnIsBusyChanged(bool value)
     {
-        OnPropertyChanged(nameof(CanRunActions));
-        OnPropertyChanged(nameof(CanPickFile));
-        OnPropertyChanged(nameof(HasPreview));
-        CompressPreviewCommand.NotifyCanExecuteChanged();
-        CompressFullCommand.NotifyCanExecuteChanged();
-        ExtractPreviewCommand.NotifyCanExecuteChanged();
-        ExtractFullCommand.NotifyCanExecuteChanged();
+        RefreshUiState();
     }
 
     partial void OnInputFilePathChanged(string? value)
     {
-        OnPropertyChanged(nameof(InputDisplayName));
-        OnPropertyChanged(nameof(HasInput));
-        OnPropertyChanged(nameof(CanRunActions));
-        OnPropertyChanged(nameof(CanPickFile));
-        OnPropertyChanged(nameof(HasPreview));
-        CompressPreviewCommand.NotifyCanExecuteChanged();
-        CompressFullCommand.NotifyCanExecuteChanged();
-        ExtractPreviewCommand.NotifyCanExecuteChanged();
-        ExtractFullCommand.NotifyCanExecuteChanged();
+        RefreshUiState(includeInputState: true);
     }
 
     private async Task RunCompressAsync(bool preview10Seconds)
@@ -296,8 +276,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private static string TruncateLog(string text)
     {
-        const int max = 2000;
-        return text.Length <= max ? text : text[..max] + Environment.NewLine + "...(日志已截断)";
+        return text.Length <= MaxLogLength
+            ? text
+            : text[..MaxLogLength] + Environment.NewLine + "...(日志已截断)";
     }
 
     private async Task RefreshVideoPreviewAsync(string videoPath, string title)
@@ -328,6 +309,28 @@ public partial class MainWindowViewModel : ViewModelBase
         PreviewBitmap = new Bitmap(stream);
         PreviewTitle = title;
         OnPropertyChanged(nameof(HasPreview));
+    }
+
+    private void RefreshUiState(bool includeInputState = false)
+    {
+        if (includeInputState)
+        {
+            OnPropertyChanged(nameof(InputDisplayName));
+            OnPropertyChanged(nameof(HasInput));
+        }
+
+        OnPropertyChanged(nameof(CanRunActions));
+        OnPropertyChanged(nameof(CanPickFile));
+        OnPropertyChanged(nameof(HasPreview));
+        NotifyActionCommandsChanged();
+    }
+
+    private void NotifyActionCommandsChanged()
+    {
+        CompressPreviewCommand.NotifyCanExecuteChanged();
+        CompressFullCommand.NotifyCanExecuteChanged();
+        ExtractPreviewCommand.NotifyCanExecuteChanged();
+        ExtractFullCommand.NotifyCanExecuteChanged();
     }
 
     public void Play(string videoPath)
