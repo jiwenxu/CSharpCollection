@@ -11,6 +11,9 @@ namespace LotteryPicker.Forms
         private ComboBox _cboLottery;
         private Button _btnCopy;
         private DataGridView _grid;
+        private PagerBar _pager;
+        private readonly System.Collections.Generic.List<Recommend> _all =
+            new System.Collections.Generic.List<Recommend>();
 
         public RecommendsTab()
         {
@@ -68,18 +71,33 @@ namespace LotteryPicker.Forms
             _grid.Columns["Created"].FillWeight = 25;
             _grid.CellDoubleClick += (s, e) => CopySelected();
 
+            _pager = new PagerBar();
+            _pager.PageChanged += (s, e) => RenderPage();
+
             Controls.Add(_grid);
+            Controls.Add(_pager);
             Controls.Add(top);
         }
 
         public void RefreshData()
         {
             string code = _cboLottery.SelectedIndex <= 0 ? "" : LotteryInfo.All[_cboLottery.SelectedIndex - 1].Code;
-            var recs = Db.RecommendRepository.GetAll(code);
 
+            _all.Clear();
+            _all.AddRange(Db.RecommendRepository.GetAll(code));
+
+            _pager.Reset(_all.Count);
+        }
+
+        /// <summary>渲染当前页的推荐记录</summary>
+        private void RenderPage()
+        {
             _grid.Rows.Clear();
-            foreach (var rec in recs)
+            int size = _pager.PageSize;
+            int start = (_pager.CurrentPage - 1) * size;
+            for (int i = start; i < _all.Count && i < start + size; i++)
             {
+                var rec = _all[i];
                 string lotteryName = LotteryInfo.Get(rec.LotteryCode).Name;
                 _grid.Rows.Add(rec.Issue, lotteryName, rec.RuleName,
                     Models.LotteryInfo.Format(rec.Reds.Replace(",", "  "), rec.Blues.Replace(",", "  ")),

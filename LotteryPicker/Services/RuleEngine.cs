@@ -14,7 +14,10 @@ namespace LotteryPicker.Services
         {
             new HotRule(),
             new ColdRule(),
-            new LiuYaoRule(),
+            new LiuYaoRule(),                          // 六爻（全池）
+            new LiuYaoCfRule(),                        // 六爻(去热冷)
+            new LiuRenRule("liuren", "六壬", false),   // 六壬（全池）
+            new LiuRenRule("liuren_cf", "六壬(去热冷)", true), // 六壬(去热冷)
         };
 
         public static List<IRuleGenerator> All { get { return _generators; } }

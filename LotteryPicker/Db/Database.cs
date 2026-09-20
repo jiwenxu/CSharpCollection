@@ -95,29 +95,45 @@ CREATE TABLE IF NOT EXISTS AppConfig (
             InsertIgnore(conn, "INSERT OR IGNORE INTO Lottery (Code, Name) VALUES ('dlt', '大乐透')");
             InsertIgnore(conn, "INSERT OR IGNORE INTO Lottery (Code, Name) VALUES ('ssq', '双色球')");
 
-            // 规则（与 RuleEngine 中注册的规则一一对应）
+            // 规则（与 RuleEngine 中注册的规则一一对应；热号/冷号默认停用见下方迁移）
             InsertIgnore(conn, "INSERT OR IGNORE INTO Rule (Name, Code, Enabled) VALUES ('热号', 'hot', 1)");
             InsertIgnore(conn, "INSERT OR IGNORE INTO Rule (Name, Code, Enabled) VALUES ('冷号', 'cold', 1)");
             InsertIgnore(conn, "INSERT OR IGNORE INTO Rule (Name, Code, Enabled) VALUES ('六爻', 'liuyao', 1)");
+            InsertIgnore(conn, "INSERT OR IGNORE INTO Rule (Name, Code, Enabled) VALUES ('六爻(去热冷)', 'liuyao_cf', 1)");
+            InsertIgnore(conn, "INSERT OR IGNORE INTO Rule (Name, Code, Enabled) VALUES ('六壬', 'liuren', 1)");
+            InsertIgnore(conn, "INSERT OR IGNORE INTO Rule (Name, Code, Enabled) VALUES ('六壬(去热冷)', 'liuren_cf', 1)");
 
-            // 规则-彩种 关联（默认热号/冷号/六爻均适用于两个彩种）
-            using (var cmd = new SQLiteCommand(
-                "INSERT OR IGNORE INTO RuleLottery (RuleId, LotteryId) " +
-                "SELECT r.Id, l.Id FROM Rule r, Lottery l WHERE r.Code = 'hot' AND l.Code IN ('dlt','ssq')", conn))
+            // 规则-彩种 关联（六壬/六爻默认均适用于两个彩种）
+            string[] allCodes = { "hot", "cold", "liuyao", "liuyao_cf", "liuren", "liuren_cf" };
+            foreach (var code in allCodes)
             {
-                cmd.ExecuteNonQuery();
+                using (var cmd = new SQLiteCommand(
+                    "INSERT OR IGNORE INTO RuleLottery (RuleId, LotteryId) " +
+                    "SELECT r.Id, l.Id FROM Rule r, Lottery l " +
+                    "WHERE r.Code = @c AND l.Code IN ('dlt','ssq')", conn))
+                {
+                    cmd.Parameters.AddWithValue("@c", code);
+                    cmd.ExecuteNonQuery();
+                }
             }
-            using (var cmd = new SQLiteCommand(
-                "INSERT OR IGNORE INTO RuleLottery (RuleId, LotteryId) " +
-                "SELECT r.Id, l.Id FROM Rule r, Lottery l WHERE r.Code = 'cold' AND l.Code IN ('dlt','ssq')", conn))
+
+            // 一次性迁移：默认不再用热号/冷号自动选号（仅首次执行一次，之后不覆盖手动设置）
+            using (var chk = new SQLiteCommand(
+                "SELECT COUNT(*) FROM AppConfig WHERE Key = 'default_rules_v2_applied'", conn))
             {
-                cmd.ExecuteNonQuery();
-            }
-            using (var cmd = new SQLiteCommand(
-                "INSERT OR IGNORE INTO RuleLottery (RuleId, LotteryId) " +
-                "SELECT r.Id, l.Id FROM Rule r, Lottery l WHERE r.Code = 'liuyao' AND l.Code IN ('dlt','ssq')", conn))
-            {
-                cmd.ExecuteNonQuery();
+                if (Convert.ToInt64(chk.ExecuteScalar()) == 0)
+                {
+                    using (var cmd = new SQLiteCommand(
+                        "UPDATE Rule SET Enabled = 0 WHERE Code IN ('hot', 'cold')", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                    using (var cmd = new SQLiteCommand(
+                        "INSERT OR IGNORE INTO AppConfig (Key, Value) VALUES ('default_rules_v2_applied', '1')", conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
             }
         }
 

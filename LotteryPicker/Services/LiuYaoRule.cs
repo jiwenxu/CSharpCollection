@@ -12,9 +12,12 @@ namespace LotteryPicker.Services
     /// </summary>
     public class LiuYaoRule : IRuleGenerator
     {
-        public string Code { get { return "liuyao"; } }
-        public string Name { get { return "六爻"; } }
-        public string Description { get { return "模拟铜钱摇卦，以本卦/变卦/动爻推演号码，卦定号定"; } }
+        public virtual string Code { get { return "liuyao"; } }
+        public virtual string Name { get { return "六爻"; } }
+        public virtual string Description { get { return "模拟铜钱摇卦，以本卦/变卦/动爻推演号码，卦定号定"; } }
+
+        /// <summary>去热冷版本为 true：候选池剔除最近统计窗口内的热门与冷门号码</summary>
+        protected virtual bool ExcludeHotCold { get { return false; } }
 
         public GeneratedNumbers Generate(LotteryInfo lottery, List<Draw> recentDraws)
         {
@@ -47,9 +50,13 @@ namespace LotteryPicker.Services
             int seed = benGua * 10000 + bianGua * 100 + moveCount * 10 + moveSum;
             var gen = new Random(seed);
 
-            // 4. 选号：注内不重复，按彩种取满前区/后区
-            var reds = PickNumbers(gen, lottery.FrontMax, lottery.FrontCount);
-            var blues = PickNumbers(gen, lottery.BackMax, lottery.BackCount);
+            // 4. 选号：注内不重复，按彩种取满前区/后区（去热冷版本先过滤候选池）
+            var redPool = PoolFilter.GetPool(recentDraws, false,
+                lottery.FrontMax, lottery.FrontCount, ExcludeHotCold);
+            var bluePool = PoolFilter.GetPool(recentDraws, true,
+                lottery.BackMax, lottery.BackCount, ExcludeHotCold);
+            var reds = PickNumbers(gen, redPool, lottery.FrontCount);
+            var blues = PickNumbers(gen, bluePool, lottery.BackCount);
 
             return new GeneratedNumbers { Reds = reds, Blues = blues };
         }
@@ -64,10 +71,19 @@ namespace LotteryPicker.Services
             return (upper * 8 + lower) + 1;                                          // 1-64
         }
 
-        /// <summary>在 1..max 中取 count 个不重复号码（升序）</summary>
-        private static List<int> PickNumbers(Random rnd, int max, int count)
+        /// <summary>在候选池中取 count 个不重复号码（升序）</summary>
+        private static List<int> PickNumbers(Random rnd, List<int> pool, int count)
         {
+            var list = pool.ToList();
             var set = new HashSet<int>();
+            int max = list.Count > 0 ? list.Max() : 0;
+            while (set.Count < count && list.Count > 0)
+            {
+                int idx = rnd.Next(list.Count);
+                set.Add(list[idx]);
+                list.RemoveAt(idx);
+            }
+            // 极端兜底（正常不会触发）：候选不足时全量域随机补满
             while (set.Count < count)
             {
                 set.Add(rnd.Next(1, max + 1));

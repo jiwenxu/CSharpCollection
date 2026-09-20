@@ -12,6 +12,9 @@ namespace LotteryPicker.Forms
         private ComboBox _cboLottery;
         private Label _lblLatest;
         private DataGridView _grid;
+        private PagerBar _pager;
+        private readonly System.Collections.Generic.List<string[]> _rows =
+            new System.Collections.Generic.List<string[]>();
 
         public DrawsTab()
         {
@@ -64,7 +67,11 @@ namespace LotteryPicker.Forms
             _grid.Columns["Date"].FillWeight = 30;
             _grid.Columns["Numbers"].FillWeight = 100;
 
+            _pager = new PagerBar();
+            _pager.PageChanged += (s, e) => RenderPage();
+
             Controls.Add(_grid);
+            Controls.Add(_pager);
             Controls.Add(top);
         }
 
@@ -72,7 +79,7 @@ namespace LotteryPicker.Forms
         {
             string code = _cboLottery.SelectedIndex <= 0 ? "" : LotteryInfo.All[_cboLottery.SelectedIndex - 1].Code;
 
-            _grid.Rows.Clear();
+            _rows.Clear();
             foreach (var lottery in LotteryInfo.All)
             {
                 if (!string.IsNullOrEmpty(code) && lottery.Code != code) continue;
@@ -87,9 +94,27 @@ namespace LotteryPicker.Forms
 
                 foreach (var d in draws)
                 {
-                    _grid.Rows.Add(d.Issue, d.DrawDate,
-                        Models.LotteryInfo.Format(d.Reds.Replace(",", "  "), d.Blues.Replace(",", "  ")));
+                    _rows.Add(new[]
+                    {
+                        d.Issue,
+                        d.DrawDate,
+                        Models.LotteryInfo.Format(d.Reds.Replace(",", "  "), d.Blues.Replace(",", "  ")),
+                    });
                 }
+            }
+
+            _pager.Reset(_rows.Count);
+        }
+
+        /// <summary>渲染当前页的开奖数据</summary>
+        private void RenderPage()
+        {
+            _grid.Rows.Clear();
+            int size = _pager.PageSize;
+            int start = (_pager.CurrentPage - 1) * size;
+            for (int i = start; i < _rows.Count && i < start + size; i++)
+            {
+                _grid.Rows.Add(_rows[i]);
             }
         }
     }
