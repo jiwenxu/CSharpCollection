@@ -1,0 +1,28 @@
+<overlays:OverlayWindowBase x:Class="WeChatSendGuard.Overlays.BorderOverlayWindow"
+                           xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:overlays="clr-namespace:WeChatSendGuard.Overlays">
+    <Grid>
+        <!-- 红框：贴齐整个微信聊天窗口 -->
+        <Border x:Name="Frame"
+                BorderBrush="#E53935"
+                BorderThickness="4"
+                CornerRadius="2" />
+
+        <!-- 文字标签：默认关闭，由配置控制 -->
+        <Border x:Name="LabelHost"
+                Visibility="Collapsed"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,8,0,0"
+                Padding="12,4"
+                CornerRadius="4"
+                Background="#E53935">
+            <TextBlock x:Name="LabelText"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="White"
+                       Text="⚠ 风险聊天" />
+        </Border>
+    </Grid>
+</overlays:OverlayWindowBase>

@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!--
+      需带 WinRT 投影的 TFM：使用 Windows.Media.Ocr（零外部依赖）。
+      选 net10.0 而非 net8.0/net9.0：三者对 Windows 10 的支持范围相同（1607 LTSC / 1809 / 21H2，x64），
+      但 .NET 8 与 .NET 9 均于 2026-11-10 结束支持，而 .NET 10 为 LTS（支持至 2028-11-14）。
+      发布方式为框架依赖单文件（见 Properties/PublishProfiles/win-x64.pubxml）：目标机需预装 .NET 10 桌面运行时；
+      不用自包含是因为实测单文件自包含会让私有工作集从约 35MB 膨胀到 140MB，超出需求文档 5.1 的内存目标。
+    -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- 托盘图标使用 System.Windows.Forms.NotifyIcon（.NET 自带，非第三方） -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>WeChatSendGuard</AssemblyName>
+    <RootNamespace>WeChatSendGuard</RootNamespace>
+    <!--
+      WFO0003：WinForms 分析器建议把高 DPI 设置从 manifest 挪到 ApplicationHighDpiMode。
+      本应用的 DPI 正确性依赖 manifest 的 Per-Monitor V2（由 NativeMethods 走 SetWindowPos 物理像素定位），
+      且未调用 WinForms 的 ApplicationConfiguration.Initialize()，故保留 manifest 并抑制该分析器建议。
+    -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <!-- 注意：不可启用 InvariantGlobalization —— 会破坏 WPF 字体缓存，并影响中文 OCR -->
+    <ApplicationIcon>..\resource\wcsg.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 移除 WinForms 的隐式全局 using，避免与 WPF 的 Color / Application 等类型名冲突 -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      OCR 引擎：PaddleOCR PP-OCRv5 mobile（Paddle Inference + oneDNN，CPU），替代 Windows.Media.Ocr。
+      选它的理由见《Spike-05验证设计.md》13.8：同一批采集样本上 Windows.Media.Ocr 有漏字，
+      PP-OCRv5 mobile 在 light/dark × 100%/125% 四组上单路 raw@2x 即 100% 命中、100% 字准。
+      代价：模型 20MB + 原生推理库约 230MB，单次识别约 600ms（Windows OCR 约 3~4ms）。
+    -->
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
+    <PackageReference Include="Sdcb.PaddleInference.runtime.win64.mkl" Version="3.3.1.70" />
+    <PackageReference Include="Sdcb.PaddleOCR" Version="3.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 随程序一起输出，方便使用者就近查看 -->
+    <None Update="高级配置说明.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      与 WeChatWindowInspector 共用解决方案级 ..\resource\ 与 ..\models\（单一副本，避免 20MB 模型重复入库）。
+      Link 决定输出目录中的相对位置，程序按 AppContext.BaseDirectory 定位。
+    -->
+    <!-- 应用/窗口图标：嵌入为 WPF 资源，XAML 用 Icon="/Assets/wcsg.ico" 引用 -->
+    <Resource Include="..\resource\wcsg.ico" Link="Assets\wcsg.ico" />
+    <!-- 内置 GIF 素材（默认 resource\cat-run.gif，可被 config.json 的 gif.file 覆盖） -->
+    <None Include="..\resource\cat-run.gif;..\resource\daily.gif;..\resource\rabbit.gif"
+          Link="resource\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+    <!-- PP-OCRv5 mobile 模型（det 4.7MB + rec 16MB） -->
+    <None Include="..\models\paddle-ppocrv5-mobile\**\*"
+          Link="models\paddle-ppocrv5-mobile\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

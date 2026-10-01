@@ -1,0 +1,80 @@
+<Window x:Class="WeChatSendGuard.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="微信发送防误触助手（状态）"
+        Icon="/Assets/wcsg.ico"
+        Width="560" Height="520"
+        MinWidth="480" MinHeight="420"
+        WindowStartupLocation="CenterScreen"
+        Background="#FF1E1E1E"
+        Foreground="#FFE6E6E6"
+        FontFamily="Microsoft YaHei UI"
+        FontSize="13">
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 状态面板 -->
+        <Border Grid.Row="0" Background="#FF252526" CornerRadius="6" Padding="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="微信窗口" Foreground="#FF9E9E9E" Margin="0,0,12,4" />
+                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="WindowStateText" Text="—" Margin="0,0,0,4" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="渲染区" Foreground="#FF9E9E9E" Margin="0,0,12,4" />
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="RenderRectText" Text="—" Margin="0,0,0,4" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="DPI" Foreground="#FF9E9E9E" Margin="0,0,12,4" />
+                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="DpiText" Text="—" Margin="0,0,0,4" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="识别文本" Foreground="#FF9E9E9E" Margin="0,0,12,4" />
+                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="OcrTextView" Text="—" TextWrapping="Wrap" Margin="0,0,0,4" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="风险判定" Foreground="#FF9E9E9E" Margin="0,0,12,4" />
+                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="RiskText" Text="—" FontWeight="SemiBold" Margin="0,0,0,4" />
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="覆盖层状态" Foreground="#FF9E9E9E" Margin="0,0,12,4" />
+                <TextBlock Grid.Row="5" Grid.Column="1" x:Name="OverlayStateText" Text="—" Margin="0,0,0,4" />
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="识别耗时" Foreground="#FF9E9E9E" Margin="0,0,12,0" />
+                <TextBlock Grid.Row="6" Grid.Column="1" x:Name="TimingText" Text="—" />
+            </Grid>
+        </Border>
+
+        <!-- 操作 -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
+            <Button x:Name="SettingsButton" Content="设置…" Padding="12,5" Click="OnSettingsClick" />
+            <Button x:Name="ReloadButton" Content="重载配置" Padding="12,5" Margin="8,0,0,0" Click="OnReloadClick" />
+            <Button x:Name="OpenConfigButton" Content="打开配置目录" Padding="12,5" Margin="8,0,0,0" Click="OnOpenConfigClick" />
+            <Button x:Name="ExitButton" Content="退出" Padding="12,5" Margin="8,0,0,0" Click="OnExitClick" />
+            <TextBlock x:Name="ConfigPathText" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="#FF9E9E9E" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="2" Text="运行日志（最近 200 行）" Foreground="#FF9E9E9E" Margin="0,12,0,4" />
+
+        <ListBox Grid.Row="3" x:Name="LogList"
+                 Background="#FF1A1A1A"
+                 Foreground="#FFCFCFCF"
+                 BorderBrush="#FF333333"
+                 FontFamily="Consolas"
+                 FontSize="12"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+    </Grid>
+</Window>

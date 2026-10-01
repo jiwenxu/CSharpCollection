@@ -1,0 +1,45 @@
+<overlays:OverlayWindowBase x:Class="WeChatSendGuard.Overlays.GifOverlayWindow"
+                           xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:overlays="clr-namespace:WeChatSendGuard.Overlays">
+    <Grid>
+        <!-- 内置循环动画：默认素材，无需外部文件 -->
+        <Grid x:Name="BuiltInAnimation" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <ScaleTransform x:Name="PulseScale" ScaleX="1" ScaleY="1" />
+            </Grid.RenderTransform>
+            <Grid.Triggers>
+                <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="PulseScale"
+                                             Storyboard.TargetProperty="ScaleX"
+                                             From="1" To="1.12"
+                                             Duration="0:0:0.6"
+                                             AutoReverse="True"
+                                             RepeatBehavior="Forever" />
+                            <DoubleAnimation Storyboard.TargetName="PulseScale"
+                                             Storyboard.TargetProperty="ScaleY"
+                                             From="1" To="1.12"
+                                             Duration="0:0:0.6"
+                                             AutoReverse="True"
+                                             RepeatBehavior="Forever" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Grid.Triggers>
+
+            <Ellipse Fill="#E53935" Opacity="0.94" />
+            <Ellipse Margin="6" Stroke="White" StrokeThickness="3" Opacity="0.9" />
+            <TextBlock Text="!"
+                       FontSize="64"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- 用户提供的 GIF 文件 -->
+        <Image x:Name="GifImage" Visibility="Collapsed" Stretch="Uniform" />
+    </Grid>
+</overlays:OverlayWindowBase>

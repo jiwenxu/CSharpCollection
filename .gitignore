@@ -34,3 +34,4 @@ platforms/**/ffmpeg/
 # 个人设置
 appsettings.user.json
 /ClearCut/Binaries
+/WeChatSendGuard/Spike-05验证设计.md

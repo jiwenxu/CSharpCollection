@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- 需带 WinRT 投影的 TFM：Phase B 使用 Windows.Media.Ocr（零外部依赖） -->
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>WeChatWindowInspector</AssemblyName>
+    <RootNamespace>WeChatWindowInspector</RootNamespace>
+    <!-- 注意：不可启用 InvariantGlobalization —— 会破坏 WPF 字体缓存，导致网格坐标标注渲染失败 -->
+    <!-- UI Automation 客户端（System.Windows.Automation）随 WPF 框架引用提供 -->
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
+    <PackageReference Include="Sdcb.PaddleInference.runtime.win64.mkl" Version="3.3.1.70" />
+    <PackageReference Include="Sdcb.PaddleOCR" Version="3.3.1" />
+    <PackageReference Include="Sdcb.PaddleOCR.Models.Local" Version="3.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      PP-OCRv5 mobile 模型（det 4.7MB + rec 16MB，Paddle 3.x inference 格式）；
+      源文件放在解决方案级 ..\models\（与生产程序 WeChatSendGuard.App 共用同一份），
+      这里 Link 到输出目录的 models\paddle-ppocrv5-mobile，供 bench-paddle-model=mobile 加载。
+    -->
+    <None Include="..\models\paddle-ppocrv5-mobile\**\*"
+          Link="models\paddle-ppocrv5-mobile\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
