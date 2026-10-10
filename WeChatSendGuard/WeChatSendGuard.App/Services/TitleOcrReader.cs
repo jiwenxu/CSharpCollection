@@ -49,6 +49,10 @@ internal sealed class TitleOcrReader : IDisposable
     /// </summary>
     private readonly Lazy<PaddleOcrAll> _engine = new(CreateEngine, LazyThreadSafetyMode.ExecutionAndPublication);
 
+    /// <summary>上一次识别的指纹与结果：标题区画面未变时直接复用，跳过最耗 CPU 的放大与推理。</summary>
+    private ulong _lastSignature;
+    private OcrReadResult? _lastResult;
+
     /// <summary>启动时调用一次：把模型加载与首帧推理的冷启动成本挪到后台，避免拖慢第一次真识别。</summary>
     public void Warmup() => _ = _engine.Value;
 
@@ -64,6 +68,16 @@ internal sealed class TitleOcrReader : IDisposable
         // 等价于"裁剪区 ×dpi/96、放大 ÷dpi/96"，但把非整数放大倍数挪到了缩图这一步（HighQuality），
         // 使进入 OCR 的位图在任何 DPI 下都与 100% 完全一致。
         var baseline = ResampleToBaseline(cropped, factor);
+
+        // 画面未变则直接复用上次结果：标题区像素（连同 DPI / 裁剪尺寸 / 放大倍数）与上次一致时，
+        // 跳过最耗 CPU 的放大 + Paddle 推理。这样"静止停留在同一会话"这一常态几乎不占 CPU，
+        // 只有真正切换会话（标题变化）才付一次推理开销。
+        var signature = ComputeSignature(baseline, options.BaseScale, dpi);
+        if (_lastResult is not null && signature == _lastSignature)
+        {
+            return _lastResult;
+        }
+
         var rendered = ScaleUp(baseline, options.BaseScale);
         Dump(rendered, options.DumpDirectory);
 
@@ -72,13 +86,42 @@ internal sealed class TitleOcrReader : IDisposable
         using var bgr = bgra.CvtColor(ColorConversionCodes.BGRA2BGR);
         var text = _engine.Value.Run(bgr).Text ?? string.Empty;
 
-        return new OcrReadResult(
+        var result = new OcrReadResult(
             text,
             region,
             new RegionSpec(0, 0, baseline.PixelWidth, baseline.PixelHeight),
             options.BaseScale,
             dpi,
             stopwatch.ElapsedMilliseconds);
+
+        _lastSignature = signature;
+        _lastResult = result;
+        return result;
+    }
+
+    /// <summary>
+    /// 标题区画面 + 关键参数的指纹（FNV-1a 64）。像素、裁剪尺寸、放大倍数或 DPI 任一变化都算"画面变化"，
+    /// 需要重新识别；只有全部一致才复用缓存结果。
+    /// </summary>
+    private static ulong ComputeSignature(BitmapSource image, int scale, int dpi)
+    {
+        var stride = (image.PixelWidth * image.Format.BitsPerPixel + 7) / 8;
+        var pixels = new byte[stride * image.PixelHeight];
+        image.CopyPixels(pixels, stride, 0);
+
+        unchecked
+        {
+            var hash = 14695981039346656037UL;
+            foreach (var value in pixels)
+            {
+                hash = (hash ^ value) * 1099511628211UL;
+            }
+
+            hash = (hash ^ (ulong)image.PixelWidth) * 1099511628211UL;
+            hash = (hash ^ (ulong)image.PixelHeight) * 1099511628211UL;
+            hash = (hash ^ (ulong)scale) * 1099511628211UL;
+            return (hash ^ (ulong)dpi) * 1099511628211UL;
+        }
     }
 
     /// <summary>把物理裁剪图按 1/factor 缩回 96 DPI 基准尺寸（factor 为 1 时原样返回）。</summary>
@@ -155,7 +198,10 @@ internal sealed class TitleOcrReader : IDisposable
             DetectionModel.FromDirectory(detDir, ModelVersion.V5),
             RecognizationModel.FromDirectoryV5(recDir));
 
-        var engine = new PaddleOcrAll(model, PaddleDevice.Mkldnn())
+        // 限制推理线程数：Paddle 默认吃满所有逻辑核，OCR 一跑整机 CPU 就冲顶；标题区是小图，
+        // 取 min(4, 核数/2) 已足够，能明显降温且几乎不增加单次耗时。
+        var threads = Math.Clamp(Environment.ProcessorCount / 2, 1, 4);
+        var engine = new PaddleOcrAll(model, PaddleDevice.Mkldnn(cpuMathThreadCount: threads))
         {
             // 标题栏是水平且正向的文字：关掉这两条分支既提速，也避免角度误判
             AllowRotateDetection = false,
